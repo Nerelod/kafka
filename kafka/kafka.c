@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 DWORD g_NtAllocateVirtualMemorySyscall = 0;
+DWORD g_NtProtectVirtualMemorySyscall = 0;
 
 DWORD GetSyscallFromDisk(const char* name){
     HMODULE cleanNtDll = LoadLibraryExA(
@@ -29,6 +30,7 @@ DWORD GetSyscallFromDisk(const char* name){
 
 void InitSyscalls(){
     g_NtAllocateVirtualMemorySyscall = GetSyscallFromDisk("NtAllocateVirtualMemory");
+    g_NtProtectVirtualMemorySyscall = GetSyscallFromDisk("NtProtectVirtualMemory");
 }
 
 extern NTSTATUS NtAllocateVirtualMemory_syscall(
@@ -40,8 +42,15 @@ extern NTSTATUS NtAllocateVirtualMemory_syscall(
     ULONG Protect
 );
 
-void* MyHeapAlloc(SIZE_T size)
-{
+extern NTSTATUS NtProtectVirtualMemory_syscall(
+    HANDLE ProcessHandle,
+    PVOID* BaseAddress,
+    PSIZE_T RegionSize,
+    ULONG NewProtect,
+    PULONG OldProtect
+);
+
+void* h_ntallocatevirtualmemory(SIZE_T size, ULONG protect){
     PVOID base = NULL;
     SIZE_T regionSize = size;
 
@@ -51,7 +60,7 @@ void* MyHeapAlloc(SIZE_T size)
         0,
         &regionSize,
         MEM_COMMIT | MEM_RESERVE,
-        PAGE_READWRITE
+        protect
     );
 
     if (status != 0)
@@ -60,9 +69,20 @@ void* MyHeapAlloc(SIZE_T size)
     return base;
 }
 
+void h_ntprotectvirtualmemory(void* buf, SIZE_T size, ULONG newprotect, PULONG oldprotect) {
+    
+    NTSTATUS status = NtProtectVirtualMemory_syscall(
+        GetCurrentProcess(),
+        (PVOID*)&buf,
+        &size,
+        newprotect,
+        oldprotect
+    );
+}
+
 int main(void){
     InitSyscalls();
-    char* buf = (char*)MyHeapAlloc(0x1000);
+    char* buf = (char*)h_ntallocatevirtualmemory(0x1000, PAGE_READWRITE);
     if (!buf) {
         return -1;
     }
@@ -70,6 +90,10 @@ int main(void){
     strcpy_s(buf, 0x1000, "Hello from syscall-backed allocator");
     puts(buf);
     fflush(stdout);
+    
+    PULONG oldprotect;
+    void h_ntprotectvirtualmemory(buf, 0x1000, PAGE_EXECUTE_READ, oldprotect); 
+    MessageBoxA(Null, "this is a message", "Debug", MB_OK);
 
     return 0;
 }
