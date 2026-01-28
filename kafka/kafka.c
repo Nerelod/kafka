@@ -92,7 +92,7 @@ int main(void){
     puts(buf);
     fflush(stdout);
     
-    PULONG oldprotect;
+    ULONG oldprotect;
     h_ntprotectvirtualmemory(buf, 0x1000, PAGE_EXECUTE_READWRITE, &oldprotect); 
     MessageBoxA(NULL, "this is a message", "Debug", MB_OK);
 
