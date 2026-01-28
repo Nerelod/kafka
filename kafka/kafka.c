@@ -5,7 +5,7 @@
 DWORD g_NtAllocateVirtualMemorySyscall = 0;
 DWORD g_NtProtectVirtualMemorySyscall = 0;
 
-DWORD GetSyscallFromDisk(const char* name){
+DWORD GetSyscallFromDisk10(const char* name){
     HMODULE cleanNtDll = LoadLibraryExA(
         "ntdll.dll",
         NULL,
@@ -28,9 +28,57 @@ DWORD GetSyscallFromDisk(const char* name){
     return syscall;
 }
 
+DWORD ExtractSyscallNumber(BYTE* fn) {
+    BYTE* p = fn;
+    // Follow jump stubs
+    for (int depth = 0; depth < 5; depth++) {
+        // jmp rel32
+        if (p[0] == 0xE9) {
+            INT32 rel = *(INT32*)(p + 1);
+            p = p + 5 + rel;
+            continue;
+        }
+        // jmp qword ptr [rip+imm32]
+        if (p[0] == 0xFF && p[1] == 0x25) {
+            INT32 rel = *(INT32*)(p + 2);
+            BYTE** target = (BYTE**)(p + 6 + rel);
+            p = *target;
+            continue;
+        }
+        break;
+    }
+    // Now scan for mov eax, imm32
+    for (int i = 0; i < 0x40; i++) {
+        if (p[i] == 0xB8) {
+            return *(DWORD*)(p + i + 1);
+        }
+    }
+    return 0;
+}
+
+DWORD GetSyscallFromDisk11(const char* name) {
+    HMODULE cleanNtDll = LoadLibraryExA(
+        "ntdll.dll",
+        NULL,
+        DONT_RESOLVE_DLL_REFERENCES
+    );
+
+    if (!cleanNtDll)
+        return 0;
+
+    BYTE* fn = (BYTE*)GetProcAddress(cleanNtDll, name);
+    if (!fn)
+        return 0;
+
+    DWORD syscall = ExtractSyscallNumber(fn);
+
+    FreeLibrary(cleanNtDll);
+    return syscall;
+}
+
 void InitSyscalls(){
-    g_NtAllocateVirtualMemorySyscall = GetSyscallFromDisk("NtAllocateVirtualMemory");
-    g_NtProtectVirtualMemorySyscall = GetSyscallFromDisk("NtProtectVirtualMemory");
+    g_NtAllocateVirtualMemorySyscall = GetSyscallFromDisk10("NtAllocateVirtualMemory");
+    g_NtProtectVirtualMemorySyscall = GetSyscallFromDisk10("NtProtectVirtualMemory");
 }
 
 extern NTSTATUS NtAllocateVirtualMemory_syscall(
