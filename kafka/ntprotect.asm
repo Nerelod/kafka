@@ -7,5 +7,5 @@ NtProtectVirtualMemory_syscall PROC
     mov eax, g_NtProtectVirtualMemorySyscall
     syscall
     ret
-NtAllocateVirtualMemory_syscall ENDP
+NtProtectVirtualMemory_syscall ENDP
 END

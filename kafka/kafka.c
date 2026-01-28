@@ -83,6 +83,7 @@ void h_ntprotectvirtualmemory(void* buf, SIZE_T size, ULONG newprotect, PULONG o
 int main(void){
     InitSyscalls();
     char* buf = (char*)h_ntallocatevirtualmemory(0x1000, PAGE_READWRITE);
+    printf("buf=%p\n", buf);
     if (!buf) {
         return -1;
     }
@@ -92,8 +93,8 @@ int main(void){
     fflush(stdout);
     
     PULONG oldprotect;
-    void h_ntprotectvirtualmemory(buf, 0x1000, PAGE_EXECUTE_READ, oldprotect); 
-    MessageBoxA(Null, "this is a message", "Debug", MB_OK);
+    h_ntprotectvirtualmemory(buf, 0x1000, PAGE_EXECUTE_READWRITE, &oldprotect); 
+    MessageBoxA(NULL, "this is a message", "Debug", MB_OK);
 
     return 0;
 }

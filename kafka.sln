@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36414.22 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kafka", "kafka\kafka.vcxproj", "{46372A60-0CC8-41F6-83D2-ABB3EF33C8C2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kafka", "kafka\kafka.vcxproj", "{41FC04D4-FCAD-487A-A3AF-939A1428FB22}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,19 +13,19 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{46372A60-0CC8-41F6-83D2-ABB3EF33C8C2}.Debug|x64.ActiveCfg = Debug|x64
-		{46372A60-0CC8-41F6-83D2-ABB3EF33C8C2}.Debug|x64.Build.0 = Debug|x64
-		{46372A60-0CC8-41F6-83D2-ABB3EF33C8C2}.Debug|x86.ActiveCfg = Debug|Win32
-		{46372A60-0CC8-41F6-83D2-ABB3EF33C8C2}.Debug|x86.Build.0 = Debug|Win32
-		{46372A60-0CC8-41F6-83D2-ABB3EF33C8C2}.Release|x64.ActiveCfg = Release|x64
-		{46372A60-0CC8-41F6-83D2-ABB3EF33C8C2}.Release|x64.Build.0 = Release|x64
-		{46372A60-0CC8-41F6-83D2-ABB3EF33C8C2}.Release|x86.ActiveCfg = Release|Win32
-		{46372A60-0CC8-41F6-83D2-ABB3EF33C8C2}.Release|x86.Build.0 = Release|Win32
+		{41FC04D4-FCAD-487A-A3AF-939A1428FB22}.Debug|x64.ActiveCfg = Debug|x64
+		{41FC04D4-FCAD-487A-A3AF-939A1428FB22}.Debug|x64.Build.0 = Debug|x64
+		{41FC04D4-FCAD-487A-A3AF-939A1428FB22}.Debug|x86.ActiveCfg = Debug|Win32
+		{41FC04D4-FCAD-487A-A3AF-939A1428FB22}.Debug|x86.Build.0 = Debug|Win32
+		{41FC04D4-FCAD-487A-A3AF-939A1428FB22}.Release|x64.ActiveCfg = Release|x64
+		{41FC04D4-FCAD-487A-A3AF-939A1428FB22}.Release|x64.Build.0 = Release|x64
+		{41FC04D4-FCAD-487A-A3AF-939A1428FB22}.Release|x86.ActiveCfg = Release|Win32
+		{41FC04D4-FCAD-487A-A3AF-939A1428FB22}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {50CC1FE7-AEA0-4149-BFF9-50E8E1B21C87}
+		SolutionGuid = {E27EC965-C204-4504-B14A-B9883E4FE002}
 	EndGlobalSection
 EndGlobal
