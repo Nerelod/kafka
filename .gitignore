@@ -18,6 +18,7 @@
 build/
 bin/
 obj/
+enc_temp_folder/
 ipch/
 *.ilk
 *.meta
