@@ -18,6 +18,9 @@
     <ClCompile Include="kafka.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ums.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="ntalloc.asm">
@@ -29,5 +32,19 @@
     <MASM Include="ntthread.asm">
       <Filter>Source Files</Filter>
     </MASM>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="crypto.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="evasion.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="syscalls.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ntwrappers.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -125,6 +125,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="kafka.c" />
+    <ClCompile Include="ums.c" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="ntalloc.asm">
@@ -134,6 +135,12 @@
       <FileType>Document</FileType>
     </MASM>
     <MASM Include="ntthread.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="crypto.h" />
+    <ClInclude Include="evasion.h" />
+    <ClInclude Include="ntwrappers.h" />
+    <ClInclude Include="syscalls.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
