@@ -131,6 +131,7 @@
     <MASM Include="ntalloc.asm">
       <FileType>Document</FileType>
     </MASM>
+    <MASM Include="ntdelay.asm" />
     <MASM Include="ntprotect.asm">
       <FileType>Document</FileType>
     </MASM>
@@ -139,6 +140,7 @@
   <ItemGroup>
     <ClInclude Include="crypto.h" />
     <ClInclude Include="evasion.h" />
+    <ClInclude Include="lostwritings.h" />
     <ClInclude Include="ntwrappers.h" />
     <ClInclude Include="obfstring.h" />
     <ClInclude Include="syscalls.h" />

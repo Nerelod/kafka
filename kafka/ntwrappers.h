@@ -2,6 +2,11 @@
 #include <windows.h>
 #include <winternl.h>
 
+extern NTSTATUS NtDelayExecution_syscall(
+    BOOLEAN Alertable,
+    PLARGE_INTEGER DelayInterval
+);
+
 extern NTSTATUS NtAllocateVirtualMemory_syscall(
     HANDLE ProcessHandle,
     PVOID* BaseAddress,
@@ -32,6 +37,13 @@ extern NTSTATUS NtCreateThreadEx_syscall(
     SIZE_T MaximumStackSize,
     PVOID AttributeList
 );
+
+void h_ntdelayexecution(BOOLEAN alertable, PLARGE_INTEGER delayinterval) {
+    NTSTATUS status = NtDelayExecution_syscall(
+        alertable,
+        delayinterval
+    );
+}
 
 void* h_ntallocatevirtualmemory(SIZE_T size, ULONG protect) {
     PVOID base = NULL;

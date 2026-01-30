@@ -4,6 +4,7 @@
 DWORD g_NtAllocateVirtualMemorySyscall = 0;
 DWORD g_NtProtectVirtualMemorySyscall = 0;
 DWORD g_NtCreateThreadExSyscall = 0;
+DWORD g_NtDelayExecutionSyscall = 0;
 
 
 DWORD GetSyscallFromDiskClassic(const char* name) {

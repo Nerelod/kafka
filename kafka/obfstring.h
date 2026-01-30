@@ -58,3 +58,9 @@ static const unsigned char s_NtCreateThreadEx[] = {
     OBF_CHAR('a'), OBF_CHAR('d'), OBF_CHAR('E'), OBF_CHAR('x'),
     OBF_CHAR('\0')
 };
+
+static const unsigned char s_key[] = {
+    OBF_CHAR('h'), OBF_CHAR('o'), OBF_CHAR('n'),
+    OBF_CHAR('e'), OBF_CHAR('s'), OBF_CHAR('t'),
+    OBF_CHAR('\0')
+};
