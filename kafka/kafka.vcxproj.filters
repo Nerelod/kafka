@@ -26,5 +26,8 @@
     <MASM Include="ntprotect.asm">
       <Filter>Source Files</Filter>
     </MASM>
+    <MASM Include="ntthread.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

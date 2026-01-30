@@ -133,6 +133,7 @@
     <MASM Include="ntprotect.asm">
       <FileType>Document</FileType>
     </MASM>
+    <MASM Include="ntthread.asm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
