@@ -1,7 +1,10 @@
 #pragma once
+#include "obfstring.h"
+
 DWORD g_NtAllocateVirtualMemorySyscall = 0;
 DWORD g_NtProtectVirtualMemorySyscall = 0;
 DWORD g_NtCreateThreadExSyscall = 0;
+
 
 DWORD GetSyscallFromDiskClassic(const char* name) {
     HMODULE cleanNtDll = LoadLibraryExA(
@@ -75,10 +78,20 @@ DWORD GetSyscallFromDisk(const char* name) {
 }
 
 void InitSyscalls() {
-    g_NtAllocateVirtualMemorySyscall = GetSyscallFromDiskClassic("NtAllocateVirtualMemory");
-    printf("NtAllocateVirtualMemory: %d\n", g_NtAllocateVirtualMemorySyscall);
-    g_NtProtectVirtualMemorySyscall = GetSyscallFromDiskClassic("NtProtectVirtualMemory");
-    printf("NtProtectVirtualMemory: %d\n", g_NtProtectVirtualMemorySyscall);
-    g_NtCreateThreadExSyscall = GetSyscallFromDiskClassic("NtCreateThreadEx");
-    printf("NtCreateThreadEx: %d\n", g_NtCreateThreadExSyscall);
+    unsigned char d[32];
+
+    obf_decode(d, s_NtAllocateVirtualMemory, sizeof(s_NtAllocateVirtualMemory));
+    g_NtAllocateVirtualMemorySyscall = GetSyscallFromDiskClassic(d);
+    printf("%s: %d\n", d, g_NtAllocateVirtualMemorySyscall);
+    secure_zero(d, sizeof(d));
+
+    obf_decode(d, s_NtProtectVirtualMemory, sizeof(s_NtProtectVirtualMemory));
+    g_NtProtectVirtualMemorySyscall = GetSyscallFromDiskClassic(d);
+    printf("%s: %d\n", d, g_NtProtectVirtualMemorySyscall);
+    secure_zero(d, sizeof(d));
+
+    obf_decode(d, s_NtCreateThreadEx, sizeof(s_NtCreateThreadEx));
+    g_NtCreateThreadExSyscall = GetSyscallFromDiskClassic(d);
+    printf("%s: %d\n", d, g_NtCreateThreadExSyscall);
+    secure_zero(d, sizeof(d));
 }

@@ -140,6 +140,7 @@
     <ClInclude Include="crypto.h" />
     <ClInclude Include="evasion.h" />
     <ClInclude Include="ntwrappers.h" />
+    <ClInclude Include="obfstring.h" />
     <ClInclude Include="syscalls.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
