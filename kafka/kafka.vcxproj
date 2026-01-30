@@ -136,6 +136,7 @@
       <FileType>Document</FileType>
     </MASM>
     <MASM Include="ntthread.asm" />
+    <MASM Include="ntwait.asm" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crypto.h" />

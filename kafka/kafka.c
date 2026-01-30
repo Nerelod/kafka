@@ -63,7 +63,7 @@ int main(void) {
 
     HANDLE hThread = NULL;
 	h_ntcreatethreadex(&hThread, buf, NULL);
-    WaitForSingleObject(hThread, INFINITE);
+    h_ntwaitforsingleobject(hThread, FALSE, NULL);
 
     h_ntprotectvirtualmemory(buf, sc_size, PAGE_READONLY, &oldprotect);
 

@@ -35,6 +35,9 @@
     <MASM Include="ntdelay.asm">
       <Filter>Source Files</Filter>
     </MASM>
+    <MASM Include="ntwait.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crypto.h">

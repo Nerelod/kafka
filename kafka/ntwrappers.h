@@ -38,6 +38,12 @@ extern NTSTATUS NtCreateThreadEx_syscall(
     PVOID AttributeList
 );
 
+extern NTSTATUS NtWaitForSingleObject_syscall(
+    HANDLE Handle,
+    BOOLEAN Alertable,
+    PLARGE_INTEGER Timeout
+);
+
 void h_ntdelayexecution(BOOLEAN alertable, PLARGE_INTEGER delayinterval) {
     NTSTATUS status = NtDelayExecution_syscall(
         alertable,
@@ -89,5 +95,13 @@ void h_ntcreatethreadex(PHANDLE threadhandle, PVOID startroutine, PVOID argument
         0,
         0,
         NULL
+    );
+}
+
+void h_ntwaitforsingleobject(HANDLE handle, BOOLEAN alertable, PLARGE_INTEGER timeout) {
+    NTSTATUS status = NtWaitForSingleObject_syscall(
+        handle,
+        alertable,
+        timeout
     );
 }
